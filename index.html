@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Belajar Kotoba</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#3b6ea5">
+<style>
+  :root {
+    --bg: #f6f4ef; --surface: #ffffff; --text: #1f1f1f; --muted: #6b6b6b;
+    --accent: #3b6ea5; --ok: #2e8b57; --bad: #c0392b; --border: #e2ded4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b1b1f; --surface: #26262c; --text: #f2f2f2; --muted: #9a9aa3;
+      --accent: #7aa7d9; --ok: #4fbf7f; --bad: #e0695b; --border: #3a3a42;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1b1f; --surface: #26262c; --text: #f2f2f2; --muted: #9a9aa3;
+    --accent: #7aa7d9; --ok: #4fbf7f; --bad: #e0695b; --border: #3a3a42;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+    padding: env(safe-area-inset-top, 0px) 16px env(safe-area-inset-bottom, 0px);
+  }
+  .wrap { max-width: 520px; margin: 0 auto; padding: 24px 0; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: .9rem; margin-bottom: 20px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+  label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 6px; }
+  select, button {
+    font: inherit; border-radius: 10px; border: 1px solid var(--border);
+    padding: 10px 14px; background: var(--surface); color: var(--text);
+  }
+  select { width: 100%; margin-bottom: 14px; }
+  button { cursor: pointer; }
+  button.primary { background: var(--accent); color: #fff; border: none; width: 100%; font-weight: 600; }
+  button.ghost { width: 100%; color: var(--muted); margin-top: 8px; }
+  .stats { font-size: .9rem; color: var(--muted); margin: -4px 0 14px; }
+  .prompt { text-align: center; padding: 18px 0 10px; }
+  .prompt .main { font-size: 3rem; font-weight: 600; line-height: 1.2; }
+  .prompt .hint { color: var(--muted); font-size: .9rem; margin-top: 6px; }
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .opt {
+    padding: 14px 10px; text-align: center; font-size: 1rem; border-radius: 12px;
+    border: 1.5px solid var(--border); background: var(--surface); color: var(--text); min-height: 56px;
+  }
+  .opt.correct { border-color: var(--ok); background: rgba(46,139,87,.15); }
+  .opt.wrong { border-color: var(--bad); background: rgba(192,57,43,.15); }
+  .feedback { text-align: center; min-height: 26px; margin: 14px 0 6px; font-weight: 600; }
+  .feedback.ok { color: var(--ok); }
+  .feedback.bad { color: var(--bad); }
+  .progress-head { display: flex; justify-content: space-between; font-size: .85rem; color: var(--muted); margin-bottom: 8px; }
+  .bar { height: 8px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 14px; }
+  .bar > div { height: 100%; background: var(--accent); transition: width .3s; }
+  .streak { display: flex; justify-content: center; gap: 6px; margin-top: 8px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--accent); }
+  .dot.on { background: var(--accent); }
+  .hidden { display: none; }
+  .center { text-align: center; }
+  .big { font-size: 2.2rem; margin: 10px 0; }
+  .topbar { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 10px 0 12px; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .tb-row { margin-bottom: 8px; }
+  .tb-row:last-child { margin-bottom: 0; }
+  .tb-head { display: flex; justify-content: space-between; font-size: .85rem; }
+  .tb-head b { color: var(--text); }
+  .tb-label { font-weight: 600; font-size: .85rem; }
+  .tb-text { font-size: .8rem; color: var(--muted); }
+  .tb-bar { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; margin-top: 4px; }
+  .tb-bar > div { height: 100%; background: var(--ok); transition: width .3s; }
+  .welcome { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 40%, rgba(59,110,165,.12), var(--bg) 70%); transition: opacity .7s ease; overflow: hidden; cursor: pointer; text-align: center; padding: 20px; }
+  .welcome.gone { opacity: 0; pointer-events: none; }
+  .w-jp { font-size: 3.4rem; font-weight: 700; color: var(--accent); animation: wIn 1s ease-out both; }
+  .w-id { font-size: 1.4rem; font-weight: 600; margin-top: 10px; animation: wIn 1s .4s ease-out both; }
+  .w-sub { margin-top: 8px; color: var(--muted); font-size: .95rem; animation: wIn 1s .8s ease-out both; }
+  .w-hint { position: absolute; bottom: 28px; font-size: .8rem; color: var(--muted); animation: wIn 1s 1.2s ease-out both; }
+  .w-float { position: absolute; font-size: 2rem; color: var(--accent); opacity: .22; animation: wFloat 3.5s ease-in-out infinite; pointer-events: none; }
+  @keyframes wIn { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
+  @keyframes wFloat { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-18px) rotate(8deg); } }
+  .greet { font-weight: 600; font-size: 1.05rem; margin-bottom: 14px; }
+  .reg-input { font: inherit; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text); width: 100%; max-width: 320px; margin-top: 18px; text-align: center; font-size: 1.05rem; }
+  .char-grid { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; justify-content: center; max-width: 340px; }
+  .char-btn { width: 60px; height: 60px; font-size: 1.9rem; border-radius: 16px; border: 2px solid var(--border); background: var(--surface); cursor: pointer; }
+  .char-btn.sel { border-color: var(--accent); background: rgba(59,110,165,.15); transform: scale(1.08); }
+  .reg-err { color: var(--bad); font-size: .85rem; margin-top: 10px; min-height: 18px; }
+</style>
+</head>
+<body>
+<div id="welcome" class="welcome">
+  <div class="w-jp">ようこそ</div>
+  <div class="w-id">Selamat datang di Belajar Kotoba</div>
+  <div class="w-sub">Selamat belajar! 頑張って ✨</div>
+  <div class="w-hint">Ketuk untuk melanjutkan</div>
+</div>
+<div id="register" class="welcome" style="display:none;cursor:default">
+  <div class="w-id">Buat profilmu</div>
+  <div class="w-sub">Masukkan nama dan pilih karaktermu</div>
+  <input id="uname" class="reg-input" maxlength="12" placeholder="Nama pengguna">
+  <div class="char-grid" id="charGrid"></div>
+  <button class="primary" id="regBtn" style="max-width:320px;margin-top:18px">Mulai belajar</button>
+  <div class="reg-err" id="regErr"></div>
+</div>
+<div class="wrap">
+  <div class="topbar" id="topbar"></div>
+  <h1>Belajar Kotoba</h1>
+  <div class="sub" id="subtitle">Cocokkan jawaban dengan benar 3 kali berturut-turut untuk lulus. Salah = mulai ulang dari 0.</div>
+
+  <!-- MENU -->
+  <div id="menu" class="card">
+    <div class="greet" id="greet"></div>
+    <label for="category">Kategori</label>
+    <select id="category"></select>
+    <div class="stats" id="catStats"></div>
+    <label for="mode">Mode</label>
+    <select id="mode">
+      <option value="kanji-arti">Kanji → Arti</option>
+      <option value="kana-arti">Hiragana → Arti</option>
+      <option value="kanji-kana">Kanji → Hiragana</option>
+    </select>
+    <button class="primary" id="startBtn">Mulai</button>
+    <button class="ghost" id="resetBtn">Reset semua progres</button>
+    <button class="ghost" id="profileBtn">Ganti profil</button>
+  </div>
+
+  <!-- GAME -->
+  <div id="game" class="hidden">
+    <div class="card">
+      <div class="progress-head">
+        <span id="progText"></span>
+        <span id="modeLabel"></span>
+      </div>
+      <div class="bar"><div id="progBar" style="width:0%"></div></div>
+      <div class="prompt">
+        <div class="main" id="promptMain"></div>
+        <div class="hint" id="promptHint"></div>
+        <div class="streak" id="streakDots"></div>
+      </div>
+      <div class="options" id="options"></div>
+      <div class="feedback" id="feedback"></div>
+      <button class="primary hidden" id="nextBtn">Lanjut</button>
+    </div>
+    <button class="ghost" id="backBtn">← Kembali ke menu</button>
+  </div>
+
+  <!-- SELESAI -->
+  <div id="done" class="card center hidden">
+    <div class="big">🎉</div>
+    <h2 style="margin:0 0 6px">Kategori selesai!</h2>
+    <div class="sub">Semua kotoba di kategori ini sudah lulus 3 kali berturut-turut.</div>
+    <button class="primary" id="againBtn">Kembali ke menu</button>
+  </div>
+</div>
+
+<script>
+// ===== DATA: format "kanji|hiragana|arti" =====
+// Tambahkan baris baru di sini untuk memperbanyak kotoba.
+const RAW = {
+  "Makanan": [
+    "水|みず|air", "ご飯|ごはん|nasi", "魚|さかな|ikan", "肉|にく|daging", "卵|たまご|telur",
+    "野菜|やさい|sayur", "茶|おちゃ|teh", "牛乳|ぎゅうにゅう|susu sapi", "米|こめ|beras",
+    "果物|くだもの|buah", "塩|しお|garam", "砂糖|さとう|gula", "朝ご飯|あさごはん|sarapan",
+    "昼ご飯|ひるごはん|makan siang"
+  ],
+  "Transportasi": [
+    "電車|でんしゃ|kereta listrik", "車|くるま|mobil", "自転車|じてんしゃ|sepeda", "駅|えき|stasiun",
+    "船|ふね|kapal", "道|みち|jalan", "空港|くうこう|bandara", "飛行機|ひこうき|pesawat terbang",
+    "切符|きっぷ|tiket", "町|まち|kota", "地下鉄|ちかてつ|kereta bawah tanah",
+    "信号|しんごう|lampu lalu lintas", "駐車場|ちゅうしゃじょう|tempat parkir"
+  ],
+  "Keluarga": [
+    "父|ちち|ayah (milik sendiri)", "母|はは|ibu (milik sendiri)", "兄|あに|kakak laki-laki",
+    "姉|あね|kakak perempuan", "弟|おとうと|adik laki-laki", "妹|いもうと|adik perempuan",
+    "友達|ともだち|teman", "先生|せんせい|guru", "子供|こども|anak", "家族|かぞく|keluarga",
+    "夫|おっと|suami", "妻|つま|istri", "男|おとこ|laki-laki", "女|おんな|perempuan", "人|ひと|orang"
+  ],
+  "Sekolah": [
+    "学校|がっこう|sekolah", "学生|がくせい|pelajar", "教室|きょうしつ|ruang kelas", "本|ほん|buku",
+    "紙|かみ|kertas", "字|じ|huruf", "漢字|かんじ|kanji", "日本語|にほんご|bahasa Jepang",
+    "英語|えいご|bahasa Inggris", "勉強|べんきょう|belajar", "宿題|しゅくだい|pekerjaan rumah",
+    "試験|しけん|ujian", "辞書|じしょ|kamus", "鉛筆|えんぴつ|pensil", "授業|じゅぎょう|pelajaran"
+  ],
+  "Tubuh": [
+    "手|て|tangan", "足|あし|kaki", "頭|あたま|kepala", "目|め|mata", "耳|みみ|telinga",
+    "口|くち|mulut", "鼻|はな|hidung", "顔|かお|wajah", "体|からだ|tubuh"
+  ],
+  "Alam": [
+    "山|やま|gunung", "川|かわ|sungai", "海|うみ|laut", "空|そら|langit", "木|き|pohon",
+    "雨|あめ|hujan", "雪|ゆき|salju", "石|いし|batu", "森|もり|hutan", "風|かぜ|angin",
+    "草|くさ|rumput", "月|つき|bulan", "星|ほし|bintang", "島|しま|pulau"
+  ],
+  "Waktu & Kata Kerja": [
+    "今日|きょう|hari ini", "明日|あした|besok", "昨日|きのう|kemarin", "時間|じかん|waktu",
+    "朝|あさ|pagi", "夜|よる|malam", "週|しゅう|minggu", "年|とし|tahun",
+    "見る|みる|melihat", "食べる|たべる|makan", "飲む|のむ|minum", "行く|いく|pergi",
+    "来る|くる|datang", "書く|かく|menulis", "読む|よむ|membaca", "話す|はなす|berbicara",
+    "聞く|きく|mendengar", "買う|かう|membeli", "作る|つくる|membuat", "寝る|ねる|tidur"
+  ],
+  "Kata Sifat": [
+    "大きい|おおきい|besar", "小さい|ちいさい|kecil", "高い|たかい|tinggi / mahal",
+    "安い|やすい|murah", "新しい|あたらしい|baru", "古い|ふるい|lama (usia benda)",
+    "多い|おおい|banyak", "少ない|すくない|sedikit", "暑い|あつい|panas (cuaca)",
+    "寒い|さむい|dingin (cuaca)", "早い|はやい|cepat / awal", "遅い|おそい|lambat / terlambat",
+    "美味しい|おいしい|enak", "楽しい|たのしい|menyenangkan", "忙しい|いそがしい|sibuk"
+  ],
+  "Angka & Waktu": [
+    "一|いち|satu", "二|に|dua", "三|さん|tiga", "四|よん|empat", "五|ご|lima", "六|ろく|enam",
+    "七|なな|tujuh", "八|はち|delapan", "九|きゅう|sembilan", "十|じゅう|sepuluh", "百|ひゃく|seratus",
+    "千|せん|seribu", "円|えん|yen", "日|ひ|hari / matahari", "金|かね|uang", "土|つち|tanah", "分|ふん|menit",
+    "時|じ|jam (waktu)", "半|はん|setengah", "毎日|まいにち|setiap hari", "今年|ことし|tahun ini",
+    "来年|らいねん|tahun depan", "先週|せんしゅう|minggu lalu", "午前|ごぜん|pagi (AM)", "午後|ごご|sore (PM)"
+  ],
+  "Tempat": [
+    "家|いえ|rumah", "部屋|へや|kamar", "会社|かいしゃ|perusahaan", "病院|びょういん|rumah sakit",
+    "銀行|ぎんこう|bank", "郵便局|ゆうびんきょく|kantor pos", "店|みせ|toko", "市場|いちば|pasar",
+    "公園|こうえん|taman", "図書館|としょかん|perpustakaan", "大学|だいがく|universitas", "国|くに|negara",
+    "東京|とうきょう|Tokyo", "京都|きょうと|Kyoto", "大阪|おおさか|Osaka", "神社|じんじゃ|kuil Shinto",
+    "寺|てら|kuil Buddha", "城|しろ|kastil", "台所|だいどころ|dapur", "風呂|ふろ|bak mandi",
+    "階段|かいだん|tangga", "入口|いりぐち|pintu masuk", "出口|でぐち|pintu keluar"
+  ],
+  "Arah & Posisi": [
+    "右|みぎ|kanan", "左|ひだり|kiri", "上|うえ|atas", "下|した|bawah", "中|なか|dalam", "外|そと|luar",
+    "前|まえ|depan", "後ろ|うしろ|belakang", "近く|ちかく|dekat", "遠い|とおい|jauh", "東|ひがし|timur",
+    "西|にし|barat", "南|みなみ|selatan", "北|きた|utara"
+  ],
+  "Belanja & Benda": [
+    "買い物|かいもの|belanja", "値段|ねだん|harga", "財布|さいふ|dompet", "服|ふく|baju", "靴|くつ|sepatu",
+    "帽子|ぼうし|topi", "鞄|かばん|tas", "傘|かさ|payung", "時計|とけい|jam", "眼鏡|めがね|kacamata",
+    "電話|でんわ|telepon", "手紙|てがみ|surat", "写真|しゃしん|foto", "機械|きかい|mesin", "冷蔵庫|れいぞうこ|kulkas",
+    "電気|でんき|listrik / lampu", "窓|まど|jendela", "椅子|いす|kursi", "机|つくえ|meja", "箱|はこ|kotak",
+    "袋|ふくろ|kantong", "鍵|かぎ|kunci"
+  ],
+  "Kesehatan & Darurat": [
+    "医者|いしゃ|dokter", "薬|くすり|obat", "熱|ねつ|demam", "痛い|いたい|sakit (rasa nyeri)",
+    "薬局|やっきょく|apotek", "救急車|きゅうきゅうしゃ|ambulans", "警察|けいさつ|polisi", "火事|かじ|kebakaran",
+    "地震|じしん|gempa", "台風|たいふう|topan", "助ける|たすける|menolong", "大丈夫|だいじょうぶ|tidak apa-apa / aman",
+    "元気|げんき|sehat", "疲れる|つかれる|lelah", "休み|やすみ|libur", "気持ち|きもち|perasaan", "病気|びょうき|penyakit"
+  ],
+  "Kata Kerja Sehari-hari": [
+    "入る|はいる|masuk", "出る|でる|keluar", "開ける|あける|membuka", "閉める|しめる|menutup",
+    "立つ|たつ|berdiri", "座る|すわる|duduk", "歩く|あるく|berjalan", "走る|はしる|berlari",
+    "待つ|まつ|menunggu", "持つ|もつ|memegang", "使う|つかう|memakai", "教える|おしえる|mengajar",
+    "覚える|おぼえる|mengingat", "忘れる|わすれる|lupa", "考える|かんがえる|berpikir", "知る|しる|mengetahui",
+    "分かる|わかる|mengerti", "始める|はじめる|memulai", "終わる|おわる|selesai", "乗る|のる|naik",
+    "降りる|おりる|turun", "押す|おす|mendorong", "泳ぐ|およぐ|berenang", "洗う|あらう|mencuci",
+    "切る|きる|memotong", "送る|おくる|mengirim", "届く|とどく|sampai (barang)", "呼ぶ|よぶ|memanggil",
+    "会う|あう|bertemu", "帰る|かえる|pulang", "戻る|もどる|kembali"
+  ],
+  "Kata Sifat Tambahan": [
+    "同じ|おなじ|sama", "違う|ちがう|berbeda", "好き|すき|suka", "嫌い|きらい|benci", "静か|しずか|tenang",
+    "有名|ゆうめい|terkenal", "便利|べんり|praktis", "大切|たいせつ|penting", "近い|ちかい|dekat",
+    "長い|ながい|panjang", "短い|みじかい|pendek", "重い|おもい|berat", "軽い|かるい|ringan", "強い|つよい|kuat",
+    "弱い|よわい|lemah", "広い|ひろい|luas", "狭い|せまい|sempit", "明るい|あかるい|terang", "暗い|くらい|gelap",
+    "難しい|むずかしい|sulit", "易しい|やさしい|mudah", "面白い|おもしろい|menarik"
+  ]
+};
+
+const DATA = Object.fromEntries(Object.entries(RAW).map(([c, arr]) => [
+  c, arr.map(s => { const [kanji, kana, arti] = s.split("|"); return { kanji, kana, arti }; })
+]));
+
+const PASS_STREAK = 3;
+const STORAGE_KEY = "kotoba-progress-v1";
+const MODES = {
+  "kanji-arti": "Kanji → Arti",
+  "kana-arti": "Hiragana → Arti",
+  "kanji-kana": "Kanji → Hiragana"
+};
+
+// ===== PROGRES (localStorage) =====
+function loadProgress() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+  catch (e) { return {}; }
+}
+function saveProgress() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); }
+  catch (e) { /* penyimpanan tidak tersedia; progres hanya berlaku selama sesi */ }
+}
+let progress = loadProgress();
+
+// ===== STATE =====
+let cat, mode, words, current, answered = false, lastWrong = false, total = 0;
+let retryWord = null;
+
+const $ = id => document.getElementById(id);
+const shuffle = a => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+
+Object.keys(DATA).forEach(k => {
+  const o = document.createElement("option"); o.value = k; o.textContent = k; $("category").appendChild(o);
+});
+
+function renderMenuStats() {
+  const c = $("category").value;
+  const arr = DATA[c];
+  const done = arr.filter(w => progress[c + "|" + w.kanji]?.mastered).length;
+  $("catStats").textContent = done + " / " + arr.length + " kotoba lulus di kategori ini";
+  renderTopBar();
+}
+renderMenuStats();
+$("category").onchange = renderMenuStats;
+
+// ===== TOP BAR: progres kanji dan kotoba dipisah =====
+// Entri berisi satu karakter kanji dihitung sebagai 'kanji', sisanya 'kotoba'.
+function kindOf(w) { return [...w.kanji].length === 1 ? "kanji" : "kotoba"; }
+
+function renderTopBar() {
+  const s = { kanji: { total: 0, hafal: 0, belajar: 0 }, kotoba: { total: 0, hafal: 0, belajar: 0 } };
+  Object.entries(DATA).forEach(([c, arr]) => arr.forEach(w => {
+    const k = kindOf(w), p = progress[c + "|" + w.kanji] || {};
+    s[k].total++;
+    if (p.mastered) s[k].hafal++;
+    else if (p.seen) s[k].belajar++;
+  }));
+  const row = (label, x) => {
+    const pct = x.total ? (x.hafal / x.total * 100) : 0;
+    return '<div class="tb-row">' +
+      '<div class="tb-head"><span class="tb-label">' + label + '</span>' +
+      '<span class="tb-text">Hafal <b>' + x.hafal + '</b> / ' + x.total + ' · Dipelajari <b>' + x.belajar + '</b></span></div>' +
+      '<div class="tb-bar"><div style="width:' + pct + '%"></div></div></div>';
+  };
+  $("topbar").innerHTML = row("Kanji", s.kanji) + row("Kotoba", s.kotoba);
+}
+renderTopBar();
+
+$("resetBtn").onclick = () => {
+  if (confirm("Hapus semua progres belajar?")) {
+    progress = {};
+    saveProgress();
+    renderMenuStats();
+  }
+};
+
+// ===== NAVIGASI =====
+$("startBtn").onclick = () => {
+  cat = $("category").value;
+  mode = $("mode").value;
+  words = DATA[cat].map(w => {
+    const key = cat + "|" + w.kanji;
+    const p = progress[key] || {};
+    return { ...w, key, streak: p.streak || 0, mastered: !!p.mastered, wrongs: p.wrongs || 0 };
+  });
+  total = words.length;
+  retryWord = null; lastWrong = false;
+  $("menu").classList.add("hidden");
+  $("topbar").classList.add("hidden");
+  $("subtitle").classList.add("hidden");
+  $("done").classList.add("hidden");
+  $("game").classList.remove("hidden");
+  $("modeLabel").textContent = cat + " · " + MODES[mode];
+  nextQuestion();
+};
+$("backBtn").onclick = backToMenu;
+$("nextBtn").onclick = () => { if (answered) nextQuestion(); };
+$("againBtn").onclick = backToMenu;
+
+function backToMenu() {
+  $("game").classList.add("hidden");
+  $("done").classList.add("hidden");
+  $("menu").classList.remove("hidden");
+  $("topbar").classList.remove("hidden");
+  $("subtitle").classList.remove("hidden");
+  renderMenuStats();
+}
+
+// ===== LOGIKA =====
+function persist(w) {
+  progress[w.key] = { streak: w.streak, mastered: w.mastered, seen: true, wrongs: w.wrongs || 0 };
+  saveProgress();
+}
+
+function pickWord() {
+  if (lastWrong && retryWord && !retryWord.mastered) return retryWord;
+  const pool = words.filter(w => !w.mastered);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function questionFor(w) {
+  const distractors = shuffle(words.filter(x => x !== w)).slice(0, 3);
+  let prompt, hint, correct, wrongs;
+  if (mode === "kanji-arti") {
+    prompt = w.kanji; hint = w.kana;
+    correct = w.arti; wrongs = distractors.map(x => x.arti);
+  } else if (mode === "kana-arti") {
+    prompt = w.kana; hint = "Hiragana";
+    correct = w.arti; wrongs = distractors.map(x => x.arti);
+  } else {
+    prompt = w.kanji; hint = "Pilih cara bacanya";
+    correct = w.kana; wrongs = distractors.map(x => x.kana);
+  }
+  return { word: w, prompt, hint, correct, options: shuffle([correct, ...wrongs]) };
+}
+
+function nextQuestion() {
+  if (words.every(w => w.mastered)) return showDone();
+  const w = pickWord();
+  current = questionFor(w);
+  answered = false;
+  lastWrong = false;
+  retryWord = null;
+  render();
+}
+
+function render() {
+  const q = current;
+  $("promptMain").textContent = q.prompt;
+  $("promptHint").textContent = q.hint;
+  setFeedback("", null);
+  $("nextBtn").classList.add("hidden");
+
+  const opts = $("options");
+  opts.innerHTML = "";
+  q.options.forEach(text => {
+    const b = document.createElement("button");
+    b.className = "opt";
+    b.textContent = text;
+    b.onclick = () => choose(b, text);
+    opts.appendChild(b);
+  });
+
+  const done = words.filter(w => w.mastered).length;
+  $("progText").textContent = done + " / " + total + " lulus";
+  $("progBar").style.width = (done / total * 100) + "%";
+  renderDots(q.word);
+}
+
+function renderDots(w) {
+  const box = $("streakDots"); box.innerHTML = "";
+  for (let i = 0; i < PASS_STREAK; i++) {
+    const d = document.createElement("span");
+    d.className = "dot" + (i < w.streak ? " on" : "");
+    box.appendChild(d);
+  }
+}
+
+function choose(btn, text) {
+  if (answered) return;
+  answered = true;
+  const w = current.word;
+  const buttons = [...document.querySelectorAll(".opt")];
+  buttons.forEach(b => b.disabled = true);
+
+  if (text === current.correct) {
+    btn.classList.add("correct");
+    w.streak++;
+    w.wrongs = 0;
+    lastWrong = false;
+    if (w.streak >= PASS_STREAK) {
+      w.mastered = true;
+      setFeedback("Lulus! " + w.kanji + " = " + w.arti, true);
+    } else {
+      setFeedback("Benar! (" + w.streak + "/" + PASS_STREAK + ")", true);
+    }
+  } else {
+    btn.classList.add("wrong");
+    buttons.forEach(b => { if (b.textContent === current.correct) b.classList.add("correct"); });
+    w.wrongs = (w.wrongs || 0) + 1;
+    lastWrong = true;
+    retryWord = null;
+    if (w.wrongs >= 2) {
+      // salah dua kali berturut-turut: hitungan kembali ke 0
+      w.streak = 0;
+      w.wrongs = 0;
+      setFeedback("Salah lagi. Jawaban: " + current.correct + ". Hitungan kata ini kembali ke 0.", false);
+    } else {
+      // salah pertama: jawaban ditampilkan, tidak masuk score
+      setFeedback("Salah. Jawaban: " + current.correct + ". Kata ini akan muncul lagi nanti.", false);
+    }
+  }
+  persist(w);
+  renderTopBar();
+  renderDots(w);
+
+  // Tombol Lanjut manual agar user sempat membaca dan mengingat jawabannya
+  $("nextBtn").classList.remove("hidden");
+}
+
+function setFeedback(msg, ok) {
+  const f = $("feedback");
+  f.textContent = msg;
+  f.className = "feedback" + (ok === true ? " ok" : ok === false ? " bad" : "");
+}
+
+function showDone() {
+  $("game").classList.add("hidden");
+  $("done").classList.remove("hidden");
+  renderMenuStats();
+}
+// ===== ANIMASI WELCOME =====
+(function () {
+  const el = document.getElementById("welcome");
+  const glyphs = ["水", "山", "日", "猫", "学", "食", "愛", "車", "友", "夢", "空", "音"];
+  glyphs.forEach((g, i) => {
+    const s = document.createElement("span");
+    s.className = "w-float";
+    s.textContent = g;
+    s.style.left = (6 + Math.random() * 86) + "%";
+    s.style.top = (6 + Math.random() * 80) + "%";
+    s.style.animationDelay = (i * 0.25) + "s";
+    el.appendChild(s);
+  });
+  const hide = () => {
+    if (el.classList.contains("gone")) return;
+    el.classList.add("gone");
+    setTimeout(() => { el.style.display = "none"; afterWelcome(); }, 800);
+  };
+  el.onclick = hide;
+  
+})();
+// ===== PROFIL PENGGUNA =====
+const CHARS = ["🐱", "🐰", "🦊", "🐼", "🐸"];
+const PROFILE_KEY = "kotoba-profile-v1";
+let profile = loadProfile();
+let selChar = null;
+
+function loadProfile() {
+  try { return JSON.parse(localStorage.getItem(PROFILE_KEY)); }
+  catch (e) { return null; }
+}
+function saveProfile(p) {
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch (e) {}
+}
+function renderGreeting() {
+  $("greet").textContent = profile ? "Halo, " + profile.name + " " + profile.char + "!" : "";
+}
+function afterWelcome() {
+  if (!profile) showRegister();
+}
+function showRegister() {
+  $("uname").value = profile ? profile.name : "";
+  selChar = profile ? profile.char : null;
+  $("regErr").textContent = "";
+  [...$("charGrid").children].forEach(b => b.classList.toggle("sel", b.textContent === selChar));
+  $("register").style.display = "flex";
+}
+CHARS.forEach(c => {
+  const b = document.createElement("button");
+  b.className = "char-btn";
+  b.textContent = c;
+  b.onclick = () => {
+    selChar = c;
+    [...$("charGrid").children].forEach(x => x.classList.toggle("sel", x === b));
+  };
+  $("charGrid").appendChild(b);
+});
+$("regBtn").onclick = () => {
+  const name = $("uname").value.trim();
+  if (!name) { $("regErr").textContent = "Isi nama pengguna dulu ya."; return; }
+  if (!selChar) { $("regErr").textContent = "Pilih salah satu karakter."; return; }
+  profile = { name: name, char: selChar };
+  saveProfile(profile);
+  $("register").style.display = "none";
+  renderGreeting();
+};
+$("profileBtn").onclick = showRegister;
+renderGreeting();
+</script>
+<script>
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(err => console.warn("Offline cache belum aktif:", err));
+  });
+}
+</script>
+</body>
+</html>
