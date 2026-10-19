@@ -1,11 +1,9 @@
 {
   "name": "Belajar Kotoba",
   "short_name": "Kotoba",
-  "description": "Aplikasi belajar kotoba dan kanji bahasa Jepang secara offline.",
   "start_url": "./index.html",
-  "scope": "./",
   "display": "standalone",
   "background_color": "#f6f4ef",
   "theme_color": "#3b6ea5",
-  "icons": []
+  "lang": "id"
 }
