@@ -1,9 +1,31 @@
 {
   "name": "Belajar Kotoba",
   "short_name": "Kotoba",
+  "description": "Belajar kosakata dan kanji bahasa Jepang.",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f6f4ef",
   "theme_color": "#3b6ea5",
-  "lang": "id"
+  "lang": "id",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
 }
