@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Belajar Kotoba</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <meta name="theme-color" content="#3b6ea5">
+<title>Belajar Kotoba</title>
 <style>
   :root {
     --bg: #f6f4ef; --surface: #ffffff; --text: #1f1f1f; --muted: #6b6b6b;
@@ -150,8 +150,9 @@
   <div id="done" class="card center hidden">
     <div class="big">🎉</div>
     <h2 style="margin:0 0 6px">Kategori selesai!</h2>
-    <div class="sub">Semua kotoba di kategori ini sudah lulus 3 kali berturut-turut.</div>
-    <button class="primary" id="againBtn">Kembali ke menu</button>
+    <div class="sub" id="doneSubtitle">Semua kotoba di kategori ini sudah lulus 3 kali berturut-turut.</div>
+    <button class="primary" id="replayBtn">Ulangi kategori ini</button>
+    <button class="ghost" id="againBtn">Kembali ke menu</button>
   </div>
 </div>
 
@@ -284,6 +285,8 @@ let progress = loadProgress();
 // ===== STATE =====
 let cat, mode, words, current, answered = false, lastWrong = false, total = 0;
 let retryWord = null;
+let reviewMode = false;
+let reviewAsked = new Set();
 
 const $ = id => document.getElementById(id);
 const shuffle = a => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
@@ -344,6 +347,8 @@ $("startBtn").onclick = () => {
   });
   total = words.length;
   retryWord = null; lastWrong = false;
+  reviewMode = false;
+  reviewAsked = new Set();
   $("menu").classList.add("hidden");
   $("topbar").classList.add("hidden");
   $("subtitle").classList.add("hidden");
@@ -372,6 +377,10 @@ function persist(w) {
 }
 
 function pickWord() {
+  if (reviewMode) {
+    const remaining = words.filter(w => !reviewAsked.has(w.key));
+    return remaining[Math.floor(Math.random() * remaining.length)];
+  }
   if (lastWrong && retryWord && !retryWord.mastered) return retryWord;
   const pool = words.filter(w => !w.mastered);
   return pool[Math.floor(Math.random() * pool.length)];
@@ -394,7 +403,7 @@ function questionFor(w) {
 }
 
 function nextQuestion() {
-  if (words.every(w => w.mastered)) return showDone();
+  if (reviewMode ? reviewAsked.size >= total : words.every(w => w.mastered)) return showDone();
   const w = pickWord();
   current = questionFor(w);
   answered = false;
@@ -442,6 +451,22 @@ function choose(btn, text) {
   const buttons = [...document.querySelectorAll(".opt")];
   buttons.forEach(b => b.disabled = true);
 
+  // Mode ulangi hanya untuk latihan; tidak mengubah progres hafalan tersimpan.
+  if (reviewMode) {
+    reviewAsked.add(w.key);
+    if (text === current.correct) {
+      btn.classList.add("correct");
+      setFeedback("Benar! " + w.kanji + " = " + w.arti, true);
+    } else {
+      btn.classList.add("wrong");
+      buttons.forEach(b => { if (b.textContent === current.correct) b.classList.add("correct"); });
+      setFeedback("Belum tepat. Jawaban: " + current.correct, false);
+    }
+    renderDots(w);
+    $("nextBtn").classList.remove("hidden");
+    return;
+  }
+
   if (text === current.correct) {
     btn.classList.add("correct");
     w.streak++;
@@ -486,8 +511,29 @@ function setFeedback(msg, ok) {
 function showDone() {
   $("game").classList.add("hidden");
   $("done").classList.remove("hidden");
+  $("doneSubtitle").textContent = reviewMode
+    ? "Selesai mengulang kategori " + cat + ". Progres hafalan yang tersimpan tetap dipertahankan."
+    : "Semua kotoba di kategori ini sudah lulus 3 kali berturut-turut. Kamu bisa mengulang kategori kapan saja.";
+  $("replayBtn").textContent = "Ulangi kategori ini";
   renderMenuStats();
 }
+
+$("replayBtn").onclick = () => {
+  reviewMode = true;
+  reviewAsked = new Set();
+  words = DATA[cat].map(w => {
+    const key = cat + "|" + w.kanji;
+    const p = progress[key] || {};
+    return { ...w, key, streak: p.streak || 0, mastered: !!p.mastered, wrongs: p.wrongs || 0 };
+  });
+  total = words.length;
+  retryWord = null;
+  lastWrong = false;
+  $("done").classList.add("hidden");
+  $("game").classList.remove("hidden");
+  $("modeLabel").textContent = cat + " · Ulangi latihan · " + MODES[mode];
+  nextQuestion();
+};
 // ===== ANIMASI WELCOME =====
 (function () {
   const el = document.getElementById("welcome");
@@ -558,10 +604,8 @@ $("profileBtn").onclick = showRegister;
 renderGreeting();
 </script>
 <script>
-if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(err => console.warn("Offline cache belum aktif:", err));
-  });
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 }
 </script>
 </body>
